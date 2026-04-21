@@ -54,6 +54,7 @@ export default function HomePage() {
           onPlayScene={handlePlay}
           onCreateScene={() => setView('editor')}
           onDeleteScene={data.deleteScene}
+          onToggleFavorite={data.toggleFavorite}
         />
       )}
 

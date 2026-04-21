@@ -1,8 +1,10 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Check, Plus, X } from 'lucide-react';
+import { ArrowLeft, Check, Play, Volume2, X } from 'lucide-react';
 import { SoundIcon } from './SoundIcon';
+import { useSoundPreview } from '@/hooks/useSoundPreview';
 import type { SceneDraft, Sound, Video } from '@/lib/types';
+import { SOUND_GROUP_ORDER } from '@/lib/types';
 
 type Props = {
   videos: Video[];
@@ -19,19 +21,43 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
   const [videoId, setVideoId] = useState<string>(videos[0]?.id ?? '');
   const [layers, setLayers] = useState<Record<string, number>>({});
   const [soundQuery, setSoundQuery] = useState('');
+  const preview = useSoundPreview();
 
   const filteredSounds = useMemo(() => {
     const q = soundQuery.trim().toLowerCase();
     if (!q) return sounds;
     return sounds.filter(s =>
       s.name.toLowerCase().includes(q) ||
-      s.category.toLowerCase().includes(q)
+      s.category.toLowerCase().includes(q) ||
+      s.group.toLowerCase().includes(q)
     );
   }, [sounds, soundQuery]);
 
+  const grouped = useMemo(() => {
+    const map = new Map<string, Sound[]>();
+    for (const s of filteredSounds) {
+      const arr = map.get(s.group) ?? [];
+      arr.push(s);
+      map.set(s.group, arr);
+    }
+    return SOUND_GROUP_ORDER
+      .filter(g => map.has(g))
+      .map(g => ({ group: g, items: map.get(g)! }))
+      .concat(
+        Array.from(map.keys())
+          .filter(g => !SOUND_GROUP_ORDER.includes(g))
+          .sort()
+          .map(g => ({ group: g, items: map.get(g)! }))
+      );
+  }, [filteredSounds]);
+
+  const selectedSounds = useMemo(
+    () => sounds.filter(s => layers[s.id] !== undefined),
+    [sounds, layers]
+  );
+
   const selectedVideo = videos.find(v => v.id === videoId);
-  const hasLayers = Object.keys(layers).length > 0;
-  const canSave = name.trim().length > 0 && !!videoId && hasLayers && !saving;
+  const canSave = name.trim().length > 0 && !!videoId && selectedSounds.length > 0 && !saving;
 
   const toggleSound = (sound: Sound) => {
     setLayers(prev => {
@@ -50,6 +76,7 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
 
   const handleSave = async () => {
     if (!canSave) return;
+    preview.stop();
     await onSave({
       name: name.trim(),
       location: location.trim() || null,
@@ -59,11 +86,16 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
     });
   };
 
+  const handleCancel = () => {
+    preview.stop();
+    onCancel();
+  };
+
   return (
     <div className="fixed inset-0 z-30 bg-black/85 backdrop-blur-md flex flex-col">
       <header className="flex items-center justify-between px-8 py-5 shrink-0 border-b border-white/5">
         <button
-          onClick={onCancel}
+          onClick={handleCancel}
           className="flex items-center gap-2 text-white/60 hover:text-white text-xs tracking-[0.3em] uppercase"
         >
           <ArrowLeft size={14} strokeWidth={1.8} />
@@ -80,26 +112,28 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 md:px-8 py-8">
-        <div className="max-w-5xl mx-auto space-y-10">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-8 space-y-10">
+
+          {/* Details */}
           <Section label="Details">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Name" required>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="My favorite night"
+                  placeholder="Cabin in the storm"
                   maxLength={80}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/25 focus:outline-none focus:border-white/40 text-sm"
+                  className="field-input"
                 />
               </Field>
               <Field label="Time">
                 <input
                   value={timeOfDay}
                   onChange={e => setTimeOfDay(e.target.value)}
-                  placeholder="Dusk"
+                  placeholder="Autumn · Dusk"
                   maxLength={80}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/25 focus:outline-none focus:border-white/40 text-sm"
+                  className="field-input"
                 />
               </Field>
               <Field label="Location">
@@ -108,109 +142,104 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
                   onChange={e => setLocation(e.target.value)}
                   placeholder="Pacific Northwest"
                   maxLength={80}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/25 focus:outline-none focus:border-white/40 text-sm"
+                  className="field-input"
                 />
               </Field>
             </div>
           </Section>
 
-          <Section label="Video" sublabel={selectedVideo ? selectedVideo.name : 'Choose one'}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {/* Video */}
+          <Section label="Scene" sublabel={selectedVideo?.name ?? 'Pick one'}>
+            <div className="flex items-start gap-5 overflow-x-auto pb-3 px-1 -mx-1 snap-x">
               {videos.map(v => (
                 <button
                   key={v.id}
                   onClick={() => setVideoId(v.id)}
-                  className={`relative aspect-video rounded-xl overflow-hidden border transition-all duration-300 ${
-                    videoId === v.id
-                      ? 'border-white/70 scale-[1.03] shadow-[0_0_25px_rgba(255,255,255,0.12)]'
-                      : 'border-white/10 hover:border-white/30 hover:scale-[1.01]'
-                  }`}
+                  className="flex flex-col items-center gap-3 shrink-0 snap-start group"
+                  style={{ width: 132 }}
                 >
-                  {v.posterSrc && (
-                    <img
-                      src={v.posterSrc}
-                      alt={v.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-all ${
-                        videoId === v.id ? 'brightness-100' : 'brightness-60'
-                      }`}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-2 left-3 right-3 text-left text-xs tracking-widest uppercase text-white">
+                  <div className={`relative w-[132px] h-[132px] rounded-full overflow-hidden border transition-all duration-300 ${
+                    videoId === v.id
+                      ? 'border-white/70 scale-[1.05] shadow-[0_0_30px_rgba(255,255,255,0.15)]'
+                      : 'border-white/10 group-hover:border-white/40 group-hover:scale-[1.02]'
+                  }`}>
+                    {v.posterSrc && (
+                      <img
+                        src={v.posterSrc}
+                        alt=""
+                        className={`absolute inset-0 w-full h-full object-cover transition-all ${
+                          videoId === v.id ? 'brightness-100' : 'brightness-60'
+                        }`}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30" />
+                    {videoId === v.id && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center">
+                        <Check size={12} strokeWidth={2.5} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-[11px] tracking-[0.2em] uppercase text-white/85 text-center truncate w-full">
                     {v.name}
                   </div>
-                  {videoId === v.id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center">
-                      <Check size={12} strokeWidth={2.5} />
-                    </div>
-                  )}
                 </button>
               ))}
             </div>
           </Section>
 
-          <Section
-            label="Sounds"
-            sublabel={hasLayers ? `${Object.keys(layers).length} selected` : 'Pick at least one'}
-          >
+          {/* Mix (selected sounds) */}
+          <Section label="Your Mix" sublabel={selectedSounds.length > 0 ? `${selectedSounds.length} layers` : 'Pick at least one'}>
+            {selectedSounds.length === 0 ? (
+              <div className="border border-dashed border-white/10 rounded-xl p-8 text-center text-white/35 text-sm">
+                Add sounds below to start mixing
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {selectedSounds.map(s => (
+                  <MixChip
+                    key={s.id}
+                    sound={s}
+                    volume={layers[s.id]}
+                    onVolume={v => setVolume(s.id, v)}
+                    onRemove={() => toggleSound(s)}
+                  />
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {/* Sounds library */}
+          <Section label="Sound Library" sublabel={`${sounds.length} sounds`}>
             <input
               type="search"
               value={soundQuery}
               onChange={e => setSoundQuery(e.target.value)}
-              placeholder="Filter sounds"
+              placeholder="Search sounds"
               aria-label="Filter sounds"
-              className="w-full max-w-sm bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/30 mb-4"
+              className="w-full max-w-sm field-input mb-5"
             />
-            <div className="space-y-2">
-              {filteredSounds.map(sound => {
-                const selected = layers[sound.id] !== undefined;
-                return (
-                  <div
-                    key={sound.id}
-                    className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all ${
-                      selected ? 'border-white/40 bg-white/5' : 'border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <button
-                      onClick={() => toggleSound(sound)}
-                      className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        selected
-                          ? 'bg-white text-black'
-                          : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/15'
-                      }`}
-                      aria-label={selected ? 'Remove sound' : 'Add sound'}
-                    >
-                      {selected ? <X size={14} strokeWidth={2} /> : <Plus size={14} strokeWidth={2} />}
-                    </button>
-                    <div className="shrink-0 w-8 h-8 rounded-md bg-white/5 text-white/70 flex items-center justify-center">
-                      <SoundIcon name={sound.icon} size={16} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white truncate">{sound.name}</div>
-                      <div className="text-[10px] tracking-[0.3em] uppercase text-white/40">
-                        {sound.category} · {formatDuration(sound.durationSec)}
-                      </div>
-                    </div>
-                    {selected && (
-                      <div className="w-40 shrink-0 flex items-center gap-3">
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          value={layers[sound.id] ?? 0}
-                          onChange={e => setVolume(sound.id, parseFloat(e.target.value))}
-                          aria-label={`${sound.name} volume`}
-                          className="aura-slider-horizontal flex-1"
-                        />
-                        <div className="text-[10px] tracking-[0.2em] uppercase text-white/50 w-8 text-right">
-                          {Math.round((layers[sound.id] ?? 0) * 100)}
-                        </div>
-                      </div>
-                    )}
+            <div className="space-y-7">
+              {grouped.map(({ group, items }) => (
+                <div key={group}>
+                  <div className="text-[10px] tracking-[0.4em] uppercase text-white/35 mb-3 flex items-center gap-3">
+                    <span>{group}</span>
+                    <span className="text-white/20 font-mono">{items.length}</span>
                   </div>
-                );
-              })}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {items.map(s => (
+                      <SoundCard
+                        key={s.id}
+                        sound={s}
+                        selected={layers[s.id] !== undefined}
+                        previewing={preview.playingSrc === s.src}
+                        onToggle={() => toggleSound(s)}
+                        onHoverStart={() => preview.play(s.src)}
+                        onHoverEnd={() => preview.stop()}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </Section>
         </div>
@@ -223,10 +252,8 @@ function Section({ label, sublabel, children }: { label: string; sublabel?: stri
   return (
     <div>
       <div className="flex items-baseline justify-between mb-4">
-        <div className="text-[10px] tracking-[0.5em] uppercase text-white/50">{label}</div>
-        {sublabel && (
-          <div className="text-[10px] tracking-[0.3em] uppercase text-white/30">{sublabel}</div>
-        )}
+        <div className="text-[11px] tracking-[0.5em] uppercase text-white/55">{label}</div>
+        {sublabel && <div className="text-[10px] tracking-[0.3em] uppercase text-white/30">{sublabel}</div>}
       </div>
       {children}
     </div>
@@ -242,6 +269,90 @@ function Field({ label, required, children }: { label: string; required?: boolea
       </div>
       {children}
     </label>
+  );
+}
+
+function MixChip({ sound, volume, onVolume, onRemove }: {
+  sound: Sound;
+  volume: number;
+  onVolume: (v: number) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="group flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.06] transition-colors">
+      <div className="shrink-0 w-9 h-9 rounded-full bg-white/10 text-white/80 flex items-center justify-center">
+        <SoundIcon name={sound.icon} size={15} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="text-[12px] text-white/95 truncate">{sound.name}</div>
+          <div className="text-[9px] tracking-[0.2em] uppercase text-white/35 font-mono">{Math.round(volume * 100)}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Volume2 size={10} strokeWidth={1.6} className="text-white/35 shrink-0" />
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={volume}
+            onChange={e => onVolume(parseFloat(e.target.value))}
+            aria-label={`${sound.name} volume`}
+            className="aura-slider-horizontal flex-1"
+          />
+        </div>
+      </div>
+      <button
+        onClick={onRemove}
+        className="shrink-0 w-7 h-7 rounded-full text-white/40 hover:text-red-300 hover:bg-white/5 flex items-center justify-center"
+        aria-label={`Remove ${sound.name}`}
+      >
+        <X size={14} strokeWidth={2} />
+      </button>
+    </div>
+  );
+}
+
+function SoundCard({ sound, selected, previewing, onToggle, onHoverStart, onHoverEnd }: {
+  sound: Sound;
+  selected: boolean;
+  previewing: boolean;
+  onToggle: () => void;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
+      onFocus={onHoverStart}
+      onBlur={onHoverEnd}
+      className={`relative group rounded-xl p-3 flex flex-col items-start gap-2 text-left transition-all duration-200 border ${
+        selected
+          ? 'border-white/60 bg-white/10'
+          : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/30'
+      }`}
+    >
+      <div className="flex items-center gap-2.5 w-full">
+        <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+          selected ? 'bg-white text-black' : 'bg-white/10 text-white/80 group-hover:bg-white/15'
+        }`}>
+          <SoundIcon name={sound.icon} size={14} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[12px] text-white/95 truncate">{sound.name}</div>
+          <div className="text-[9px] tracking-[0.2em] uppercase text-white/35 font-mono">
+            {formatDuration(sound.durationSec)}
+          </div>
+        </div>
+        {previewing && (
+          <div className="shrink-0 text-white/50">
+            <Play size={10} strokeWidth={2} fill="currentColor" />
+          </div>
+        )}
+      </div>
+    </button>
   );
 }
 

@@ -10,6 +10,7 @@ export type Video = {
 export type Sound = {
   id: string;
   name: string;
+  group: string;
   category: string;
   icon: string;
   src: string;
@@ -36,6 +37,7 @@ export type Scene = {
   posterSrc: string | null;
   layers: SceneLayer[];
   isBuiltin: boolean;
+  isFavorite: boolean;
   sortOrder: number;
   createdAt: string;
 };
@@ -52,3 +54,15 @@ export const SUBTITLE = (s: Pick<Scene, 'location' | 'timeOfDay'>) => {
   const parts = [s.timeOfDay, s.location].filter(Boolean);
   return parts.join(' · ');
 };
+
+export const SOUND_GROUP_ORDER = [
+  'Rain',
+  'Thunder',
+  'Wind',
+  'Water',
+  'Ocean',
+  'Fire',
+  'Birds',
+  'Wildlife',
+  'Other',
+];

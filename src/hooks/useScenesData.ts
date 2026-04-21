@@ -24,9 +24,7 @@ export function useScenesData() {
     }
   }, []);
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  useEffect(() => { void reload(); }, [reload]);
 
   const createScene = useCallback(async (draft: SceneDraft): Promise<Scene | null> => {
     const res = await fetch('/api/scenes', {
@@ -53,5 +51,22 @@ export function useScenesData() {
     return true;
   }, []);
 
-  return { scenes, videos, sounds, error, reload, createScene, deleteScene };
+  const toggleFavorite = useCallback(async (id: string, next: boolean): Promise<boolean> => {
+    // Optimistic
+    setScenes(prev => prev?.map(s => s.id === id ? { ...s, isFavorite: next } : s) ?? prev);
+    const res = await fetch(`/api/scenes/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isFavorite: next }),
+    });
+    if (!res.ok) {
+      // Revert on failure
+      setScenes(prev => prev?.map(s => s.id === id ? { ...s, isFavorite: !next } : s) ?? prev);
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return false;
+    }
+    return true;
+  }, []);
+
+  return { scenes, videos, sounds, error, reload, createScene, deleteScene, toggleFavorite };
 }

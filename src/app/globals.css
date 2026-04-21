@@ -126,6 +126,30 @@ html, body {
   overflow: hidden;
 }
 
+.field-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+.field-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* thin horizontal scrollbar for rows */
+.snap-x::-webkit-scrollbar {
+  height: 4px;
+}
+
 button:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.4);
   outline-offset: 3px;

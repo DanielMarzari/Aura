@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Plus, Search, Trash2, X } from 'lucide-react';
+import { Bookmark, Plus, Search, Trash2, X } from 'lucide-react';
 import type { Scene } from '@/lib/types';
 import { SUBTITLE } from '@/lib/types';
 
@@ -9,10 +9,13 @@ type Props = {
   onPlayScene: (scene: Scene) => void;
   onCreateScene: () => void;
   onDeleteScene: (id: string) => void;
+  onToggleFavorite: (id: string, next: boolean) => void;
   loading?: boolean;
 };
 
-export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteScene, loading }: Props) {
+type TileVariant = 'circle' | 'rect';
+
+export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteScene, onToggleFavorite, loading }: Props) {
   const [query, setQuery] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -27,10 +30,20 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
     );
   }, [scenes, query]);
 
+  const featured = filtered.filter(s => s.isBuiltin);
+  const yours = filtered.filter(s => !s.isBuiltin);
+  const favorites = filtered.filter(s => s.isFavorite);
+
   return (
-    <div className="fixed inset-0 z-30 bg-black/75 backdrop-blur-md flex flex-col">
-      <header className="flex items-center justify-between px-8 py-6 shrink-0">
+    <div className="fixed inset-0 z-30 bg-black/80 backdrop-blur-md flex flex-col">
+      <header className="flex items-center justify-between px-8 md:px-12 py-7 shrink-0">
         <div className="text-[10px] tracking-[0.6em] text-white/50 uppercase">Aura</div>
+        <div className="text-center">
+          <div className="text-2xl md:text-3xl font-extralight tracking-[0.3em] text-white/95">LIBRARY</div>
+          <div className="text-[10px] tracking-[0.4em] text-white/40 uppercase mt-1">
+            Soundscapes for every moment
+          </div>
+        </div>
         <div className="relative">
           <Search
             size={14}
@@ -43,7 +56,7 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
             onChange={e => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search scenes"
-            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 text-sm text-white/90 placeholder:text-white/30 w-56 md:w-72 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-colors"
+            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-10 py-2 text-sm text-white/90 placeholder:text-white/30 w-48 md:w-60 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-colors"
           />
           {query && (
             <button
@@ -55,43 +68,97 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
             </button>
           )}
         </div>
-        <div className="text-[10px] tracking-[0.3em] text-white/30 uppercase w-16 text-right">
-          {scenes ? `${filtered.length}/${scenes.length}` : ''}
-        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 max-w-[1400px] mx-auto">
-          {loading && !scenes && Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-video rounded-xl bg-white/[0.03] border border-white/5 animate-pulse" />
-          ))}
+      <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-8">
+        {loading && !scenes && (
+          <div className="flex justify-center gap-6 mt-16">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-36 h-36 rounded-full bg-white/[0.03] border border-white/5 animate-pulse" />
+            ))}
+          </div>
+        )}
 
-          {filtered.map(scene => (
-            <SceneCard
-              key={scene.id}
-              scene={scene}
-              onPlay={() => onPlayScene(scene)}
-              onDelete={scene.isBuiltin ? undefined : () => setConfirmDeleteId(scene.id)}
-            />
-          ))}
+        {scenes && (
+          <div className="max-w-[1600px] mx-auto space-y-12 mt-4">
+            {favorites.length > 0 && (
+              <Row label="Your Favorites">
+                <HorizontalScroll>
+                  {favorites.map(s => (
+                    <CircleTile
+                      key={s.id}
+                      scene={s}
+                      size="md"
+                      onPlay={() => onPlayScene(s)}
+                      onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
+                      onDelete={s.isBuiltin ? undefined : () => setConfirmDeleteId(s.id)}
+                    />
+                  ))}
+                </HorizontalScroll>
+              </Row>
+            )}
 
-          {!loading && scenes && <CreateSceneTile onClick={onCreateScene} />}
-        </div>
+            {featured.length > 0 && (
+              <Row label="Featured">
+                <HorizontalScroll>
+                  {featured.map(s => (
+                    <CircleTile
+                      key={s.id}
+                      scene={s}
+                      size="lg"
+                      onPlay={() => onPlayScene(s)}
+                      onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
+                    />
+                  ))}
+                </HorizontalScroll>
+              </Row>
+            )}
 
-        {!loading && scenes && filtered.length === 0 && query && (
-          <div className="text-center text-white/40 text-sm mt-16">
-            No scenes match <span className="text-white/70">&ldquo;{query}&rdquo;</span>
+            {yours.length > 0 && (
+              <Row label="Your Scenes">
+                <HorizontalScroll>
+                  {yours.map(s => (
+                    <CircleTile
+                      key={s.id}
+                      scene={s}
+                      size="md"
+                      onPlay={() => onPlayScene(s)}
+                      onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
+                      onDelete={() => setConfirmDeleteId(s.id)}
+                    />
+                  ))}
+                  <CreateTile onClick={onCreateScene} size="md" />
+                </HorizontalScroll>
+              </Row>
+            )}
+
+            {yours.length === 0 && (
+              <Row label="Your Scenes">
+                <div className="flex gap-4 px-1 py-2">
+                  <CreateTile onClick={onCreateScene} size="md" />
+                  <div className="self-center text-white/40 text-xs tracking-[0.2em] uppercase">
+                    Mix your own
+                  </div>
+                </div>
+              </Row>
+            )}
+
+            {filtered.length === 0 && query && (
+              <div className="text-center text-white/40 text-sm mt-24">
+                No scenes match <span className="text-white/70">&ldquo;{query}&rdquo;</span>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      <footer className="text-center text-white/30 text-[10px] tracking-[0.3em] uppercase pb-6 shrink-0">
+      <footer className="text-center text-white/30 text-[10px] tracking-[0.3em] uppercase pb-5 shrink-0">
         Best with headphones
       </footer>
 
-      {confirmDeleteId && (
+      {confirmDeleteId && scenes && (
         <ConfirmDelete
-          scene={scenes!.find(s => s.id === confirmDeleteId)!}
+          scene={scenes.find(s => s.id === confirmDeleteId)!}
           onCancel={() => setConfirmDeleteId(null)}
           onConfirm={() => {
             onDeleteScene(confirmDeleteId);
@@ -103,58 +170,107 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
   );
 }
 
-function SceneCard({ scene, onPlay, onDelete }: {
-  scene: Scene;
-  onPlay: () => void;
-  onDelete?: () => void;
-}) {
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="relative group aspect-video">
-      <button
-        onClick={onPlay}
-        className="absolute inset-0 overflow-hidden rounded-xl border border-white/10 hover:border-white/40 transition-all duration-300 hover:scale-[1.02] bg-black"
-      >
-        {scene.posterSrc && (
-          <img
-            src={scene.posterSrc}
-            alt={scene.name}
-            className="absolute inset-0 w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-300"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-        <div className="absolute bottom-3 left-4 right-4 text-left">
-          <div className="text-sm tracking-widest uppercase text-white">{scene.name}</div>
-          {SUBTITLE(scene) && (
-            <div className="text-[9px] tracking-[0.3em] uppercase text-white/55 mt-0.5">
-              {SUBTITLE(scene)}
-            </div>
-          )}
-        </div>
-      </button>
-      {onDelete && (
-        <button
-          onClick={onDelete}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm text-white/50 hover:text-red-300 hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-          aria-label={`Delete ${scene.name}`}
-        >
-          <Trash2 size={12} strokeWidth={1.8} />
-        </button>
-      )}
+    <div>
+      <div className="text-[10px] tracking-[0.4em] uppercase text-white/45 mb-3 px-1">{label}</div>
+      {children}
     </div>
   );
 }
 
-function CreateSceneTile({ onClick }: { onClick: () => void }) {
+function HorizontalScroll({ children }: { children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-white/50 hover:bg-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-3 text-white/50 hover:text-white group"
-    >
-      <div className="w-10 h-10 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
-        <Plus size={18} strokeWidth={1.8} />
+    <div className="flex items-start gap-5 overflow-x-auto pb-3 -mx-1 px-1 snap-x">
+      {children}
+    </div>
+  );
+}
+
+function CircleTile({
+  scene,
+  size,
+  onPlay,
+  onToggleFavorite,
+  onDelete,
+}: {
+  scene: Scene;
+  size: 'lg' | 'md' | 'sm';
+  onPlay: () => void;
+  onToggleFavorite: () => void;
+  onDelete?: () => void;
+}) {
+  const px = size === 'lg' ? 168 : size === 'md' ? 132 : 96;
+
+  return (
+    <div className="flex flex-col items-center gap-3 shrink-0 snap-start group" style={{ width: px }}>
+      <div className="relative" style={{ width: px, height: px }}>
+        <button
+          onClick={onPlay}
+          className="relative w-full h-full rounded-full overflow-hidden border border-white/10 hover:border-white/50 transition-all duration-300 hover:scale-[1.04] bg-black shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+          aria-label={`Play ${scene.name}`}
+        >
+          {scene.posterSrc && (
+            <img
+              src={scene.posterSrc}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover brightness-80 group-hover:brightness-100 transition-all duration-300"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/60" />
+        </button>
+
+        <button
+          onClick={onToggleFavorite}
+          className={`absolute top-2 right-2 w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-all ${
+            scene.isFavorite
+              ? 'bg-white text-black opacity-100'
+              : 'bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100'
+          }`}
+          aria-label={scene.isFavorite ? 'Unfavorite' : 'Favorite'}
+        >
+          <Bookmark size={12} strokeWidth={1.8} fill={scene.isFavorite ? 'currentColor' : 'none'} />
+        </button>
+
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="absolute top-2 left-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm text-white/60 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            aria-label={`Delete ${scene.name}`}
+          >
+            <Trash2 size={12} strokeWidth={1.8} />
+          </button>
+        )}
       </div>
-      <div className="text-[10px] tracking-[0.4em] uppercase">Create Scene</div>
-    </button>
+
+      <div className="text-center w-full">
+        <div className="text-[11px] md:text-xs tracking-[0.2em] uppercase text-white/90 truncate">
+          {scene.name}
+        </div>
+        {SUBTITLE(scene) && (
+          <div className="text-[9px] tracking-[0.25em] uppercase text-white/40 mt-0.5 truncate">
+            {SUBTITLE(scene)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CreateTile({ onClick, size }: { onClick: () => void; size: 'md' | 'sm' }) {
+  const px = size === 'md' ? 132 : 96;
+  return (
+    <div className="flex flex-col items-center gap-3 shrink-0 snap-start group" style={{ width: px }}>
+      <button
+        onClick={onClick}
+        className="relative rounded-full border-2 border-dashed border-white/15 hover:border-white/50 hover:bg-white/5 transition-all duration-300 flex items-center justify-center text-white/50 hover:text-white hover:scale-[1.04]"
+        style={{ width: px, height: px }}
+        aria-label="Create scene"
+      >
+        <Plus size={24} strokeWidth={1.6} className="group-hover:scale-110 transition-transform" />
+      </button>
+      <div className="text-[11px] tracking-[0.2em] uppercase text-white/60 text-center">Create</div>
+    </div>
   );
 }
 
