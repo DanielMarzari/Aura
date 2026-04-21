@@ -30,7 +30,7 @@ sudo chown -R ubuntu:ubuntu /var/www/apps/aura
 
 Edit `/var/www/apps/ecosystem.config.js` and add the entry from
 [ecosystem.aura.snippet.js](./ecosystem.aura.snippet.js) to the `apps` array.
-Adjust the port (3004 assumed) if it's already taken — keep it in sync with the Caddyfile.
+Adjust the port (3007 assumed) if it's already taken — keep it in sync with the Caddyfile.
 
 ```bash
 sudo nano /var/www/apps/ecosystem.config.js

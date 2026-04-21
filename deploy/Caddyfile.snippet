@@ -1,18 +1,6 @@
-# Append to /etc/caddy/Caddyfile
+# Append to /etc/caddy/Caddyfile — matches the minimal style of existing entries.
 # Then: sudo systemctl reload caddy
 
 aura.danmarzari.com {
-    reverse_proxy localhost:3004
-
-    # Long cache for static media (posters, video loops, audio loops)
-    @media {
-        path /scenes/*
-    }
-    header @media Cache-Control "public, max-age=31536000, immutable"
-
-    encode gzip zstd
-    log {
-        output file /var/log/caddy/aura.log
-        format console
-    }
+	reverse_proxy localhost:3007
 }
