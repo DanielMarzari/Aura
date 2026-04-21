@@ -76,9 +76,54 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-/* Hide scrollbars entirely — it's a fullscreen experience */
+/* Horizontal slider used in scene editor */
+.aura-slider-horizontal {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.aura-slider-horizontal::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.aura-slider-horizontal::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dark but visible scrollbar for scrollable content */
 ::-webkit-scrollbar {
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+html, body {
+  overflow: hidden;
 }
 
 button:focus-visible {

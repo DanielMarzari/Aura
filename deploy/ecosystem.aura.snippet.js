@@ -8,6 +8,7 @@
   env: {
     PORT: 3007,
     HOSTNAME: "0.0.0.0",
+    DATABASE_PATH: "/var/www/apps/aura/aura.db",
     NODE_ENV: "production"
   }
 }

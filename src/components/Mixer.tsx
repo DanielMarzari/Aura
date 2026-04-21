@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { Scene } from '@/lib/scenes';
+import type { Scene } from '@/lib/types';
+import { Volume2, VolumeX } from 'lucide-react';
 
 type Props = {
   scene: Scene;
   volumes: Record<string, number>;
   master: number;
   muted: boolean;
-  onLayer: (id: string, v: number) => void;
+  onLayer: (soundId: string, v: number) => void;
   onMaster: (v: number) => void;
   onMute: () => void;
 };
@@ -44,10 +45,10 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
       <div className="flex items-end gap-5 px-7 py-5 rounded-2xl bg-black/35 backdrop-blur-xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
         {scene.layers.map(layer => (
           <LayerSlider
-            key={layer.id}
-            label={layer.label}
-            value={volumes[layer.id] ?? 0}
-            onChange={v => onLayer(layer.id, v)}
+            key={layer.soundId}
+            label={layer.name}
+            value={volumes[layer.soundId] ?? 0}
+            onChange={v => onLayer(layer.soundId, v)}
           />
         ))}
         <div className="w-px h-20 bg-white/15 self-center" />
@@ -63,7 +64,7 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
           title={muted ? 'Unmute' : 'Mute'}
           aria-label={muted ? 'Unmute' : 'Mute'}
         >
-          {muted ? <IconMuted /> : <IconSpeaker />}
+          {muted ? <VolumeX size={14} strokeWidth={1.8} /> : <Volume2 size={14} strokeWidth={1.8} />}
         </button>
       </div>
       <div className="mt-3 text-center text-[10px] tracking-[0.5em] text-white/40 uppercase">
@@ -85,7 +86,7 @@ function LayerSlider({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 w-12">
+    <div className="flex flex-col items-center gap-3 w-14">
       <div className="h-24 flex items-center justify-center">
         <input
           type="range"
@@ -97,29 +98,9 @@ function LayerSlider({
           className={`aura-slider ${emphasis ? 'aura-slider-emphasis' : ''}`}
         />
       </div>
-      <span className={`text-[10px] tracking-[0.2em] uppercase ${emphasis ? 'text-white/90' : 'text-white/65'}`}>
+      <span className={`text-[10px] tracking-[0.2em] uppercase text-center ${emphasis ? 'text-white/90' : 'text-white/65'}`}>
         {label}
       </span>
     </div>
-  );
-}
-
-function IconSpeaker() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-    </svg>
-  );
-}
-
-function IconMuted() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <line x1="22" y1="9" x2="16" y2="15" />
-      <line x1="16" y1="9" x2="22" y2="15" />
-    </svg>
   );
 }

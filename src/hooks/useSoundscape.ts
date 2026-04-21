@@ -1,9 +1,9 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Scene } from '@/lib/scenes';
+import type { Scene } from '@/lib/types';
 
 type LayerState = {
-  layerId: string;
+  soundId: string;
   source: AudioBufferSourceNode;
   gain: GainNode;
 };
@@ -86,10 +86,10 @@ export function useSoundscape() {
         source.connect(gain).connect(masterGain);
         const offset = Math.random() * buffer.duration;
         source.start(startAt, offset);
-        const target = layer.defaultVolume;
+        const target = layer.volume;
         gain.gain.linearRampToValueAtTime(target, fadeEnd);
-        initialVols[layer.id] = target;
-        newLayers.push({ layerId: layer.id, source, gain });
+        initialVols[layer.soundId] = target;
+        newLayers.push({ soundId: layer.soundId, source, gain });
       }
 
       layersRef.current = newLayers;
@@ -104,10 +104,37 @@ export function useSoundscape() {
     }
   }, []);
 
-  const setLayerVolume = useCallback((id: string, v: number) => {
-    setVolumes(prev => ({ ...prev, [id]: v }));
+  const stop = useCallback(() => {
     const ctx = ctxRef.current;
-    const layer = layersRef.current.find(l => l.layerId === id);
+    const oldLayers = layersRef.current;
+    if (!ctx || !oldLayers.length) {
+      setStatus('idle');
+      setCurrentScene(null);
+      setVolumes({});
+      return;
+    }
+    const fadeEnd = ctx.currentTime + 0.6;
+    for (const l of oldLayers) {
+      l.gain.gain.cancelScheduledValues(ctx.currentTime);
+      l.gain.gain.setValueAtTime(l.gain.gain.value, ctx.currentTime);
+      l.gain.gain.linearRampToValueAtTime(0, fadeEnd);
+    }
+    const toStop = oldLayers;
+    setTimeout(() => {
+      for (const l of toStop) {
+        try { l.source.stop(); } catch {}
+      }
+    }, 700);
+    layersRef.current = [];
+    setStatus('idle');
+    setCurrentScene(null);
+    setVolumes({});
+  }, []);
+
+  const setLayerVolume = useCallback((soundId: string, v: number) => {
+    setVolumes(prev => ({ ...prev, [soundId]: v }));
+    const ctx = ctxRef.current;
+    const layer = layersRef.current.find(l => l.soundId === soundId);
     if (ctx && layer) {
       layer.gain.gain.cancelScheduledValues(ctx.currentTime);
       layer.gain.gain.linearRampToValueAtTime(v, ctx.currentTime + RAMP_SEC);
@@ -157,6 +184,7 @@ export function useSoundscape() {
     master,
     muted,
     loadScene,
+    stop,
     setLayerVolume,
     setMasterVolume,
     toggleMute,

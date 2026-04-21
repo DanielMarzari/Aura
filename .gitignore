@@ -7,3 +7,6 @@ build
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+*.db
+*.db-wal
+*.db-shm
