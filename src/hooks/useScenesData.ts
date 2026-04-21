@@ -41,6 +41,21 @@ export function useScenesData() {
     return scene as Scene;
   }, []);
 
+  const updateScene = useCallback(async (id: string, draft: SceneDraft): Promise<Scene | null> => {
+    const res = await fetch(`/api/scenes/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draft),
+    });
+    if (!res.ok) {
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return null;
+    }
+    const { scene } = await res.json();
+    setScenes(prev => prev?.map(s => s.id === id ? scene : s) ?? prev);
+    return scene as Scene;
+  }, []);
+
   const deleteScene = useCallback(async (id: string): Promise<boolean> => {
     const res = await fetch(`/api/scenes/${id}`, { method: 'DELETE' });
     if (!res.ok) {
@@ -68,5 +83,5 @@ export function useScenesData() {
     return true;
   }, []);
 
-  return { scenes, videos, sounds, error, reload, createScene, deleteScene, toggleFavorite };
+  return { scenes, videos, sounds, error, reload, createScene, updateScene, deleteScene, toggleFavorite };
 }

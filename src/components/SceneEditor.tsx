@@ -3,25 +3,31 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Check, Play, Volume2, X } from 'lucide-react';
 import { SoundIcon } from './SoundIcon';
 import { useSoundPreview } from '@/hooks/useSoundPreview';
-import type { SceneDraft, Sound, Video } from '@/lib/types';
+import type { Scene, SceneDraft, Sound, Video } from '@/lib/types';
 import { SOUND_GROUP_ORDER } from '@/lib/types';
 
 type Props = {
   videos: Video[];
   sounds: Sound[];
+  initialScene?: Scene | null;
   onCancel: () => void;
   onSave: (draft: SceneDraft) => Promise<void>;
   saving?: boolean;
 };
 
-export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props) {
-  const [name, setName] = useState('');
-  const [timeOfDay, setTimeOfDay] = useState('');
-  const [location, setLocation] = useState('');
-  const [videoId, setVideoId] = useState<string>(videos[0]?.id ?? '');
-  const [layers, setLayers] = useState<Record<string, number>>({});
+export function SceneEditor({ videos, sounds, initialScene, onCancel, onSave, saving }: Props) {
+  const [name, setName] = useState(initialScene?.name ?? '');
+  const [timeOfDay, setTimeOfDay] = useState(initialScene?.timeOfDay ?? '');
+  const [location, setLocation] = useState(initialScene?.location ?? '');
+  const [videoId, setVideoId] = useState<string>(initialScene?.videoId ?? videos[0]?.id ?? '');
+  const [layers, setLayers] = useState<Record<string, number>>(
+    () => initialScene
+      ? Object.fromEntries(initialScene.layers.map(l => [l.soundId, l.volume]))
+      : {}
+  );
   const [soundQuery, setSoundQuery] = useState('');
   const preview = useSoundPreview();
+  const editing = !!initialScene;
 
   const filteredSounds = useMemo(() => {
     const q = soundQuery.trim().toLowerCase();
@@ -107,7 +113,9 @@ export function SceneEditor({ videos, sounds, onCancel, onSave, saving }: Props)
           <ArrowLeft size={14} strokeWidth={1.8} />
           Back
         </button>
-        <div className="text-[10px] tracking-[0.6em] uppercase text-[var(--ui-text-muted)]">New Scene</div>
+        <div className="text-[10px] tracking-[0.6em] uppercase text-[var(--ui-text-muted)]">
+          {editing ? 'Edit Scene' : 'New Scene'}
+        </div>
         <button
           onClick={handleSave}
           disabled={!canSave}

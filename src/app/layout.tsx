@@ -5,6 +5,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Aura · Soundscapes',
   description: 'Immersive nature soundscapes for focus, sleep, and rest.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 const themeInit = `

@@ -17,8 +17,8 @@ export default function HomePage() {
   const [view, setView] = useState<View>('selection');
   const [saving, setSaving] = useState(false);
   const [hoveredScene, setHoveredScene] = useState<Scene | null>(null);
+  const [editingScene, setEditingScene] = useState<Scene | null>(null);
 
-  // Background video priority: hovered scene (preview) → playing scene → first scene
   const bg: { videoSrc: string; posterSrc: string | null } | null =
     (hoveredScene && view === 'selection')
       ? { videoSrc: hoveredScene.videoSrc, posterSrc: hoveredScene.posterSrc }
@@ -42,9 +42,36 @@ export default function HomePage() {
     const created = await data.createScene(draft);
     setSaving(false);
     if (created) {
+      setEditingScene(null);
       setView('playing');
       await sound.loadScene(created);
     }
+  };
+
+  const handleUpdate = async (draft: SceneDraft) => {
+    if (!editingScene) return;
+    setSaving(true);
+    const updated = await data.updateScene(editingScene.id, draft);
+    setSaving(false);
+    if (updated) {
+      setEditingScene(null);
+      // If this scene is currently playing, the Mixer still references the stale scene.
+      // Easiest: return to selection so the updated scene is in the grid.
+      if (sound.currentScene?.id === updated.id) {
+        sound.stop();
+      }
+      setView('selection');
+    }
+  };
+
+  const handleEdit = (scene: Scene) => {
+    setEditingScene(scene);
+    setView('editor');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingScene(null);
+    setView('selection');
   };
 
   return (
@@ -58,6 +85,7 @@ export default function HomePage() {
           loading={data.scenes === null}
           onPlayScene={handlePlay}
           onCreateScene={() => setView('editor')}
+          onEditScene={handleEdit}
           onDeleteScene={data.deleteScene}
           onToggleFavorite={data.toggleFavorite}
           onHoverScene={setHoveredScene}
@@ -68,9 +96,10 @@ export default function HomePage() {
         <SceneEditor
           videos={data.videos}
           sounds={data.sounds}
+          initialScene={editingScene}
           saving={saving}
-          onCancel={() => setView('selection')}
-          onSave={handleCreate}
+          onCancel={handleCancelEdit}
+          onSave={editingScene ? handleUpdate : handleCreate}
         />
       )}
 

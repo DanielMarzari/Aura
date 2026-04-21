@@ -39,6 +39,9 @@ function iconFor(name: string) {
     case 'bell':
     case 'chime':
     case 'gong': return Bell;
+    case 'wolf':
+    case 'coyote':
+    case 'dog': return Bird;
     case 'music':
     case 'noise':
     default: return Music;

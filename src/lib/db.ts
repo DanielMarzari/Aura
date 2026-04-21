@@ -89,6 +89,12 @@ function migrate(db: Database.Database) {
     // Scenes renamed to PLACE format; reset built-in scene names/locations via seed (handled in seed)
     db.prepare('INSERT INTO schema_version (version) VALUES (4)').run();
   }
+  if (version < 5) {
+    // Reset built-in scene layers so updated seed (new sounds per scene) applies on existing DBs.
+    // User scenes are untouched.
+    db.prepare(`DELETE FROM scene_layers WHERE scene_id IN (SELECT id FROM scenes WHERE is_builtin = 1)`).run();
+    db.prepare('INSERT INTO schema_version (version) VALUES (5)').run();
+  }
 }
 
 function columnExists(db: Database.Database, table: string, column: string): boolean {
@@ -140,19 +146,31 @@ const SOUND_SEED: SoundSeed[] = [
   { id: 'ocean-harbor', name: 'Harbor Waves', group: 'Ocean', category: 'water', icon: 'waves', src: '/sounds/ocean-harbor.mp3', durationSec: 77, defaultVolume: 0.6, sortOrder: 51 },
   { id: 'ocean-rough', name: 'Rough Seas', group: 'Ocean', category: 'water', icon: 'waves', src: '/sounds/ocean-rough.mp3', durationSec: 70, defaultVolume: 0.65, sortOrder: 52 },
   { id: 'coast-breaking', name: 'Breaking Coast', group: 'Ocean', category: 'water', icon: 'waves', src: '/sounds/coast-breaking.mp3', durationSec: 120, defaultVolume: 0.65, sortOrder: 53 },
+  { id: 'humpback-whale', name: 'Humpback Song', group: 'Ocean', category: 'animals', icon: 'waves', src: '/sounds/humpback-whale.mp3', durationSec: 19, defaultVolume: 0.15, sortOrder: 54 },
+  // Coastal (2)
+  { id: 'fog-horn', name: 'Fog Horn', group: 'Coastal', category: 'ambient', icon: 'bell', src: '/sounds/fog-horn.mp3', durationSec: 20, defaultVolume: 0.18, sortOrder: 55 },
+  { id: 'snowstorm-wind', name: 'Winter Storm', group: 'Wind', category: 'weather', icon: 'wind', src: '/sounds/snowstorm-wind.mp3', durationSec: 183, defaultVolume: 0.4, sortOrder: 33 },
   // Fire (1)
   { id: 'fire-crackle', name: 'Campfire', group: 'Fire', category: 'fire', icon: 'fire', src: '/sounds/fire-crackle.mp3', durationSec: 24, defaultVolume: 0.6, sortOrder: 60 },
-  // Birds (4)
+  // Birds (8)
   { id: 'birds-forest', name: 'Forest Birds', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/birds-forest.mp3', durationSec: 55, defaultVolume: 0.3, sortOrder: 70 },
   { id: 'birds-morning', name: 'Morning Birds', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/birds-morning.mp3', durationSec: 120, defaultVolume: 0.4, sortOrder: 71 },
   { id: 'birds-long', name: 'Dawn Chorus', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/birds-long.mp3', durationSec: 209, defaultVolume: 0.35, sortOrder: 72 },
   { id: 'birds-jungle', name: 'Jungle Birds', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/birds-jungle.mp3', durationSec: 60, defaultVolume: 0.35, sortOrder: 73 },
-  // Wildlife (5)
+  { id: 'hawk', name: 'Red-tailed Hawk', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/hawk.mp3', durationSec: 18, defaultVolume: 0.1, sortOrder: 74 },
+  { id: 'raven', name: 'Raven Call', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/raven.mp3', durationSec: 14, defaultVolume: 0.12, sortOrder: 75 },
+  { id: 'loon-call', name: 'Loon Call', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/loon-call.mp3', durationSec: 20, defaultVolume: 0.15, sortOrder: 76 },
+  { id: 'seagulls-harbor', name: 'Harbor Gulls', group: 'Birds', category: 'animals', icon: 'bird', src: '/sounds/seagulls-harbor.mp3', durationSec: 56, defaultVolume: 0.25, sortOrder: 77 },
+  // Wildlife (9)
   { id: 'owl', name: 'Hooting Owl', group: 'Wildlife', category: 'animals', icon: 'owl', src: '/sounds/owl.mp3', durationSec: 90, defaultVolume: 0.15, sortOrder: 80 },
   { id: 'crickets-night', name: 'Night Crickets', group: 'Wildlife', category: 'animals', icon: 'cricket', src: '/sounds/crickets-night.mp3', durationSec: 180, defaultVolume: 0.4, sortOrder: 81 },
   { id: 'crickets-summer', name: 'Summer Crickets', group: 'Wildlife', category: 'animals', icon: 'cricket', src: '/sounds/crickets-summer.mp3', durationSec: 42, defaultVolume: 0.4, sortOrder: 82 },
   { id: 'crickets-forest', name: 'Forest Crickets', group: 'Wildlife', category: 'animals', icon: 'cricket', src: '/sounds/crickets-forest.mp3', durationSec: 126, defaultVolume: 0.4, sortOrder: 83 },
   { id: 'frogs', name: 'Frogs', group: 'Wildlife', category: 'animals', icon: 'frog', src: '/sounds/frogs.mp3', durationSec: 113, defaultVolume: 0.2, sortOrder: 84 },
+  { id: 'spring-peepers', name: 'Spring Peepers', group: 'Wildlife', category: 'animals', icon: 'frog', src: '/sounds/spring-peepers.mp3', durationSec: 72, defaultVolume: 0.3, sortOrder: 85 },
+  { id: 'bullfrog', name: 'Bullfrog', group: 'Wildlife', category: 'animals', icon: 'frog', src: '/sounds/bullfrog.mp3', durationSec: 57, defaultVolume: 0.2, sortOrder: 86 },
+  { id: 'wolf-howl', name: 'Wolf Howl', group: 'Wildlife', category: 'animals', icon: 'wolf', src: '/sounds/wolf-howl.mp3', durationSec: 24, defaultVolume: 0.1, sortOrder: 87 },
+  { id: 'coyote-howl', name: 'Coyote Howl', group: 'Wildlife', category: 'animals', icon: 'wolf', src: '/sounds/coyote-howl.mp3', durationSec: 22, defaultVolume: 0.1, sortOrder: 88 },
   // Bells (6)
   { id: 'bell-distant', name: 'Distant Bell', group: 'Bells', category: 'ambient', icon: 'bell', src: '/sounds/bell-distant.mp3', durationSec: 27, defaultVolume: 0.25, sortOrder: 90 },
   { id: 'bell-tower', name: 'Tower Bell', group: 'Bells', category: 'ambient', icon: 'bell', src: '/sounds/bell-tower.mp3', durationSec: 28, defaultVolume: 0.25, sortOrder: 91 },
@@ -253,7 +271,8 @@ const BUILTIN_SCENES: BuiltinSceneSeed[] = [
     layers: [
       { soundId: 'ocean-waves', volume: 0.75 },
       { soundId: 'coast-breaking', volume: 0.4 },
-      { soundId: 'birds-morning', volume: 0.25 },
+      { soundId: 'seagulls-harbor', volume: 0.25 },
+      { soundId: 'fog-horn', volume: 0.12 },
     ],
   },
   {
@@ -265,6 +284,7 @@ const BUILTIN_SCENES: BuiltinSceneSeed[] = [
     sortOrder: 70,
     layers: [
       { soundId: 'crickets-summer', volume: 0.5 },
+      { soundId: 'coyote-howl', volume: 0.12 },
       { soundId: 'owl', volume: 0.15 },
       { soundId: 'wind-night', volume: 0.3 },
     ],
@@ -277,9 +297,9 @@ const BUILTIN_SCENES: BuiltinSceneSeed[] = [
     videoId: 'snowy-forest',
     sortOrder: 80,
     layers: [
-      { soundId: 'wind-mountain', volume: 0.45 },
-      { soundId: 'wind-forest', volume: 0.3 },
-      { soundId: 'brown-noise', volume: 0.15 },
+      { soundId: 'snowstorm-wind', volume: 0.55 },
+      { soundId: 'wind-mountain', volume: 0.35 },
+      { soundId: 'wolf-howl', volume: 0.1 },
     ],
   },
   {
@@ -442,6 +462,27 @@ export function deleteScene(id: string): boolean {
   if (!row || row.is_builtin === 1) return false;
   db.prepare('DELETE FROM scenes WHERE id = ?').run(id);
   return true;
+}
+
+export function updateScene(id: string, draft: SceneDraft): Scene | null {
+  const db = getDb();
+  const row = db.prepare('SELECT is_builtin FROM scenes WHERE id = ?').get(id) as { is_builtin: number } | undefined;
+  if (!row || row.is_builtin === 1) return null;
+
+  const insertLayer = db.prepare(`
+    INSERT INTO scene_layers (scene_id, sound_id, volume, position)
+    VALUES (?, ?, ?, ?)
+  `);
+  db.transaction(() => {
+    db.prepare(`
+      UPDATE scenes SET name = ?, location = ?, time_of_day = ?, video_id = ?
+      WHERE id = ?
+    `).run(draft.name, draft.location, draft.timeOfDay, draft.videoId, id);
+    db.prepare('DELETE FROM scene_layers WHERE scene_id = ?').run(id);
+    draft.layers.forEach((l, i) => insertLayer.run(id, l.soundId, l.volume, i));
+  })();
+
+  return listScenes().find(s => s.id === id) ?? null;
 }
 
 export function setSceneFavorite(id: string, favorite: boolean): Scene | null {

@@ -61,6 +61,7 @@ export const SOUND_GROUP_ORDER = [
   'Wind',
   'Water',
   'Ocean',
+  'Coastal',
   'Fire',
   'Birds',
   'Wildlife',
