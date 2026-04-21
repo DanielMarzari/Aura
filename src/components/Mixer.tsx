@@ -42,7 +42,14 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
         if (timer.current) window.clearTimeout(timer.current);
       }}
     >
-      <div className="flex items-end gap-5 px-7 py-5 rounded-2xl bg-black/35 backdrop-blur-xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+      <div
+        className="flex items-end gap-5 px-7 py-5 rounded-2xl backdrop-blur-xl"
+        style={{
+          background: 'var(--ui-panel-strong)',
+          border: '1px solid var(--ui-border)',
+          boxShadow: 'var(--ui-shadow)',
+        }}
+      >
         {scene.layers.map(layer => (
           <LayerSlider
             key={layer.soundId}
@@ -51,7 +58,7 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
             onChange={v => onLayer(layer.soundId, v)}
           />
         ))}
-        <div className="w-px h-20 bg-white/15 self-center" />
+        <div className="w-px h-20 self-center" style={{ background: 'var(--ui-border)' }} />
         <LayerSlider
           label="Master"
           value={master}
@@ -60,14 +67,19 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
         />
         <button
           onClick={onMute}
-          className="w-9 h-9 rounded-full border border-white/20 text-white/75 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors self-end mb-1"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-colors self-end mb-1"
+          style={{
+            border: '1px solid var(--ui-border)',
+            color: 'var(--ui-text-muted)',
+            background: 'transparent',
+          }}
           title={muted ? 'Unmute' : 'Mute'}
           aria-label={muted ? 'Unmute' : 'Mute'}
         >
           {muted ? <VolumeX size={14} strokeWidth={1.8} /> : <Volume2 size={14} strokeWidth={1.8} />}
         </button>
       </div>
-      <div className="mt-3 text-center text-[10px] tracking-[0.5em] text-white/40 uppercase">
+      <div className="mt-3 text-center text-[10px] tracking-[0.5em] text-[var(--ui-text-dim)] uppercase">
         {scene.name}
       </div>
     </div>
@@ -75,10 +87,7 @@ export function Mixer({ scene, volumes, master, muted, onLayer, onMaster, onMute
 }
 
 function LayerSlider({
-  label,
-  value,
-  onChange,
-  emphasis,
+  label, value, onChange, emphasis,
 }: {
   label: string;
   value: number;
@@ -98,7 +107,10 @@ function LayerSlider({
           className={`aura-slider ${emphasis ? 'aura-slider-emphasis' : ''}`}
         />
       </div>
-      <span className={`text-[10px] tracking-[0.2em] uppercase text-center ${emphasis ? 'text-white/90' : 'text-white/65'}`}>
+      <span
+        className="text-[10px] tracking-[0.2em] uppercase text-center"
+        style={{ color: emphasis ? 'var(--ui-text)' : 'var(--ui-text-muted)' }}
+      >
         {label}
       </span>
     </div>

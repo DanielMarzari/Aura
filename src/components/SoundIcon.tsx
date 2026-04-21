@@ -1,5 +1,6 @@
 'use client';
 import {
+  Bell,
   Bird,
   Bug,
   CloudLightning,
@@ -35,6 +36,11 @@ function iconFor(name: string) {
     case 'cricket':
     case 'frog':
     case 'bug': return Bug;
+    case 'bell':
+    case 'chime':
+    case 'gong': return Bell;
+    case 'music':
+    case 'noise':
     default: return Music;
   }
 }

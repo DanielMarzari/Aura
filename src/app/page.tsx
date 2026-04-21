@@ -16,13 +16,18 @@ export default function HomePage() {
   const sound = useSoundscape();
   const [view, setView] = useState<View>('selection');
   const [saving, setSaving] = useState(false);
+  const [hoveredScene, setHoveredScene] = useState<Scene | null>(null);
 
-  const bgScene: { videoSrc: string; posterSrc: string | null } | null =
-    sound.currentScene ??
-    data.scenes?.[0] ??
-    null;
+  // Background video priority: hovered scene (preview) → playing scene → first scene
+  const bg: { videoSrc: string; posterSrc: string | null } | null =
+    (hoveredScene && view === 'selection')
+      ? { videoSrc: hoveredScene.videoSrc, posterSrc: hoveredScene.posterSrc }
+      : sound.currentScene
+        ?? data.scenes?.[0]
+        ?? null;
 
   const handlePlay = async (scene: Scene) => {
+    setHoveredScene(null);
     setView('playing');
     await sound.loadScene(scene);
   };
@@ -44,8 +49,8 @@ export default function HomePage() {
 
   return (
     <main className="relative w-screen h-screen overflow-hidden">
-      {bgScene && <SceneBackground src={bgScene.videoSrc} poster={bgScene.posterSrc ?? undefined} />}
-      {!bgScene && <div className="fixed inset-0 bg-black z-0" />}
+      {bg && <SceneBackground src={bg.videoSrc} poster={bg.posterSrc ?? undefined} />}
+      {!bg && <div className="fixed inset-0 bg-black z-0" />}
 
       {view === 'selection' && (
         <SceneSelection
@@ -55,6 +60,7 @@ export default function HomePage() {
           onCreateScene={() => setView('editor')}
           onDeleteScene={data.deleteScene}
           onToggleFavorite={data.toggleFavorite}
+          onHoverScene={setHoveredScene}
         />
       )}
 
@@ -70,12 +76,17 @@ export default function HomePage() {
 
       {view === 'playing' && sound.currentScene && (
         <>
-          <div className="fixed top-6 left-6 z-20 text-[10px] tracking-[0.6em] text-white/55 uppercase aura-fade-in">
+          <div className="fixed top-6 left-6 z-20 text-[10px] tracking-[0.6em] text-[var(--ui-text-muted)] uppercase aura-fade-in">
             Aura
           </div>
           <button
             onClick={handleReturnToSelection}
-            className="fixed top-6 right-6 z-20 w-9 h-9 rounded-full border border-white/20 text-white/75 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors aura-fade-in"
+            className="fixed top-6 right-6 z-20 w-9 h-9 rounded-full flex items-center justify-center transition-colors aura-fade-in"
+            style={{
+              border: '1px solid var(--ui-border)',
+              color: 'var(--ui-text-muted)',
+              background: 'var(--ui-panel)',
+            }}
             title="Return to selection"
             aria-label="Return to selection"
           >
@@ -95,8 +106,11 @@ export default function HomePage() {
       )}
 
       {view === 'playing' && sound.status === 'loading' && !sound.currentScene && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md flex items-center justify-center">
-          <div className="text-xs tracking-[0.5em] uppercase text-white/60">Loading</div>
+        <div
+          className="fixed inset-0 z-40 backdrop-blur-md flex items-center justify-center"
+          style={{ background: 'var(--ui-overlay)' }}
+        >
+          <div className="text-xs tracking-[0.5em] uppercase text-[var(--ui-text-muted)]">Loading</div>
         </div>
       )}
 

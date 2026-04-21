@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Bookmark, Plus, Search, Trash2, X } from 'lucide-react';
 import type { Scene } from '@/lib/types';
 import { SUBTITLE } from '@/lib/types';
+import { ThemeToggle } from './ThemeToggle';
 
 type Props = {
   scenes: Scene[] | null;
@@ -10,12 +11,13 @@ type Props = {
   onCreateScene: () => void;
   onDeleteScene: (id: string) => void;
   onToggleFavorite: (id: string, next: boolean) => void;
+  onHoverScene: (scene: Scene | null) => void;
   loading?: boolean;
 };
 
-type TileVariant = 'circle' | 'rect';
-
-export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteScene, onToggleFavorite, loading }: Props) {
+export function SceneSelection({
+  scenes, onPlayScene, onCreateScene, onDeleteScene, onToggleFavorite, onHoverScene, loading,
+}: Props) {
   const [query, setQuery] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -35,12 +37,18 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
   const favorites = filtered.filter(s => s.isFavorite);
 
   return (
-    <div className="fixed inset-0 z-30 bg-black/80 backdrop-blur-md flex flex-col">
+    <div
+      className="fixed inset-0 z-30 backdrop-blur-md flex flex-col"
+      style={{ background: 'var(--ui-overlay)' }}
+    >
       <header className="flex items-center justify-between px-8 md:px-12 py-7 shrink-0">
-        <div className="text-[10px] tracking-[0.6em] text-white/50 uppercase">Aura</div>
+        <div className="flex items-center gap-3">
+          <div className="text-[10px] tracking-[0.6em] uppercase text-[var(--ui-text-muted)]">Aura</div>
+          <ThemeToggle />
+        </div>
         <div className="text-center">
-          <div className="text-2xl md:text-3xl font-extralight tracking-[0.3em] text-white/95">LIBRARY</div>
-          <div className="text-[10px] tracking-[0.4em] text-white/40 uppercase mt-1">
+          <div className="text-2xl md:text-3xl font-extralight tracking-[0.3em] text-[var(--ui-text)]">LIBRARY</div>
+          <div className="text-[10px] tracking-[0.4em] uppercase text-[var(--ui-text-dim)] mt-1">
             Soundscapes for every moment
           </div>
         </div>
@@ -48,7 +56,7 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
           <Search
             size={14}
             strokeWidth={1.6}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-dim)] pointer-events-none"
           />
           <input
             type="search"
@@ -56,13 +64,20 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
             onChange={e => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search scenes"
-            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-10 py-2 text-sm text-white/90 placeholder:text-white/30 w-48 md:w-60 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-colors"
+            className="rounded-full pl-10 pr-10 py-2 text-sm w-48 md:w-60 outline-none transition-colors"
+            style={{
+              background: 'var(--ui-panel)',
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderColor: 'var(--ui-border)',
+              color: 'var(--ui-text)',
+            }}
           />
           {query && (
             <button
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-dim)] hover:text-[var(--ui-text)]"
             >
               <X size={14} strokeWidth={1.8} />
             </button>
@@ -70,11 +85,15 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-8">
+      <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-8" onMouseLeave={() => onHoverScene(null)}>
         {loading && !scenes && (
           <div className="flex justify-center gap-6 mt-16">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-36 h-36 rounded-full bg-white/[0.03] border border-white/5 animate-pulse" />
+              <div
+                key={i}
+                className="w-36 h-36 rounded-full animate-pulse"
+                style={{ background: 'var(--ui-panel)', border: '1px solid var(--ui-border)' }}
+              />
             ))}
           </div>
         )}
@@ -90,6 +109,7 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
                       scene={s}
                       size="md"
                       onPlay={() => onPlayScene(s)}
+                      onHover={() => onHoverScene(s)}
                       onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
                       onDelete={s.isBuiltin ? undefined : () => setConfirmDeleteId(s.id)}
                     />
@@ -107,6 +127,7 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
                       scene={s}
                       size="lg"
                       onPlay={() => onPlayScene(s)}
+                      onHover={() => onHoverScene(s)}
                       onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
                     />
                   ))}
@@ -123,6 +144,7 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
                       scene={s}
                       size="md"
                       onPlay={() => onPlayScene(s)}
+                      onHover={() => onHoverScene(s)}
                       onToggleFavorite={() => onToggleFavorite(s.id, !s.isFavorite)}
                       onDelete={() => setConfirmDeleteId(s.id)}
                     />
@@ -134,9 +156,9 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
 
             {yours.length === 0 && (
               <Row label="Your Scenes">
-                <div className="flex gap-4 px-1 py-2">
+                <div className="flex gap-4 px-1 py-3">
                   <CreateTile onClick={onCreateScene} size="md" />
-                  <div className="self-center text-white/40 text-xs tracking-[0.2em] uppercase">
+                  <div className="self-center text-[var(--ui-text-dim)] text-xs tracking-[0.2em] uppercase">
                     Mix your own
                   </div>
                 </div>
@@ -144,16 +166,16 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
             )}
 
             {filtered.length === 0 && query && (
-              <div className="text-center text-white/40 text-sm mt-24">
-                No scenes match <span className="text-white/70">&ldquo;{query}&rdquo;</span>
+              <div className="text-center text-[var(--ui-text-dim)] text-sm mt-24">
+                No scenes match <span className="text-[var(--ui-text-muted)]">&ldquo;{query}&rdquo;</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <footer className="text-center text-white/30 text-[10px] tracking-[0.3em] uppercase pb-5 shrink-0">
-        Best with headphones
+      <footer className="text-center text-[var(--ui-text-dim)] text-[10px] tracking-[0.3em] uppercase pb-5 shrink-0">
+        Best with headphones · Hover a scene to preview
       </footer>
 
       {confirmDeleteId && scenes && (
@@ -173,41 +195,49 @@ export function SceneSelection({ scenes, onPlayScene, onCreateScene, onDeleteSce
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] tracking-[0.4em] uppercase text-white/45 mb-3 px-1">{label}</div>
+      <div className="text-[10px] tracking-[0.4em] uppercase text-[var(--ui-text-muted)] mb-3 px-1">
+        {label}
+      </div>
       {children}
     </div>
   );
 }
 
 function HorizontalScroll({ children }: { children: React.ReactNode }) {
+  // py-4 leaves room for the hover/selected scale transform so the top edge isn't clipped
   return (
-    <div className="flex items-start gap-5 overflow-x-auto pb-3 -mx-1 px-1 snap-x">
+    <div className="flex items-start gap-5 overflow-x-auto overflow-y-visible pb-3 pt-4 -mx-1 px-1 snap-x">
       {children}
     </div>
   );
 }
 
 function CircleTile({
-  scene,
-  size,
-  onPlay,
-  onToggleFavorite,
-  onDelete,
+  scene, size, onPlay, onHover, onToggleFavorite, onDelete,
 }: {
   scene: Scene;
   size: 'lg' | 'md' | 'sm';
   onPlay: () => void;
+  onHover: () => void;
   onToggleFavorite: () => void;
   onDelete?: () => void;
 }) {
   const px = size === 'lg' ? 168 : size === 'md' ? 132 : 96;
 
   return (
-    <div className="flex flex-col items-center gap-3 shrink-0 snap-start group" style={{ width: px }}>
+    <div
+      className="flex flex-col items-center gap-3 shrink-0 snap-start group"
+      style={{ width: px }}
+      onMouseEnter={onHover}
+    >
       <div className="relative" style={{ width: px, height: px }}>
         <button
           onClick={onPlay}
-          className="relative w-full h-full rounded-full overflow-hidden border border-white/10 hover:border-white/50 transition-all duration-300 hover:scale-[1.04] bg-black shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+          className="relative w-full h-full rounded-full overflow-hidden transition-all duration-300 hover:scale-[1.04] bg-black"
+          style={{
+            border: '1px solid var(--ui-border)',
+            boxShadow: 'var(--ui-shadow)',
+          }}
           aria-label={`Play ${scene.name}`}
         >
           {scene.posterSrc && (
@@ -224,9 +254,14 @@ function CircleTile({
           onClick={onToggleFavorite}
           className={`absolute top-2 right-2 w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-all ${
             scene.isFavorite
-              ? 'bg-white text-black opacity-100'
-              : 'bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100'
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100'
           }`}
+          style={
+            scene.isFavorite
+              ? { background: 'var(--ui-accent)', color: 'var(--ui-accent-fg)' }
+              : { background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.8)' }
+          }
           aria-label={scene.isFavorite ? 'Unfavorite' : 'Favorite'}
         >
           <Bookmark size={12} strokeWidth={1.8} fill={scene.isFavorite ? 'currentColor' : 'none'} />
@@ -244,11 +279,11 @@ function CircleTile({
       </div>
 
       <div className="text-center w-full">
-        <div className="text-[11px] md:text-xs tracking-[0.2em] uppercase text-white/90 truncate">
+        <div className="text-[11px] md:text-xs tracking-[0.18em] uppercase text-[var(--ui-text)] truncate">
           {scene.name}
         </div>
         {SUBTITLE(scene) && (
-          <div className="text-[9px] tracking-[0.25em] uppercase text-white/40 mt-0.5 truncate">
+          <div className="text-[9px] tracking-[0.25em] uppercase text-[var(--ui-text-dim)] mt-0.5 truncate">
             {SUBTITLE(scene)}
           </div>
         )}
@@ -263,13 +298,19 @@ function CreateTile({ onClick, size }: { onClick: () => void; size: 'md' | 'sm' 
     <div className="flex flex-col items-center gap-3 shrink-0 snap-start group" style={{ width: px }}>
       <button
         onClick={onClick}
-        className="relative rounded-full border-2 border-dashed border-white/15 hover:border-white/50 hover:bg-white/5 transition-all duration-300 flex items-center justify-center text-white/50 hover:text-white hover:scale-[1.04]"
-        style={{ width: px, height: px }}
+        className="relative rounded-full transition-all duration-300 flex items-center justify-center hover:scale-[1.04]"
+        style={{
+          width: px,
+          height: px,
+          border: '2px dashed var(--ui-border)',
+          color: 'var(--ui-text-muted)',
+          background: 'transparent',
+        }}
         aria-label="Create scene"
       >
         <Plus size={24} strokeWidth={1.6} className="group-hover:scale-110 transition-transform" />
       </button>
-      <div className="text-[11px] tracking-[0.2em] uppercase text-white/60 text-center">Create</div>
+      <div className="text-[11px] tracking-[0.2em] uppercase text-[var(--ui-text-muted)] text-center">Create</div>
     </div>
   );
 }
@@ -281,16 +322,28 @@ function ConfirmDelete({ scene, onCancel, onConfirm }: {
 }) {
   return (
     <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
-      <div className="bg-[#141414] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-white/50 mb-2">Delete scene</div>
-        <div className="text-xl font-light text-white mb-6">{scene.name}?</div>
-        <p className="text-sm text-white/60 mb-8">
+      <div
+        className="rounded-2xl p-8 max-w-sm w-full"
+        style={{
+          background: 'var(--ui-overlay-strong)',
+          border: '1px solid var(--ui-border)',
+          boxShadow: 'var(--ui-shadow)',
+        }}
+      >
+        <div className="text-[10px] tracking-[0.4em] uppercase text-[var(--ui-text-muted)] mb-2">Delete scene</div>
+        <div className="text-xl font-light text-[var(--ui-text)] mb-6">{scene.name}?</div>
+        <p className="text-sm text-[var(--ui-text-muted)] mb-8">
           This only deletes the mix. The underlying sounds and video stay in the library.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 hover:bg-white/5 text-xs tracking-[0.3em] uppercase transition-colors"
+            className="flex-1 py-2.5 rounded-full text-xs tracking-[0.3em] uppercase transition-colors"
+            style={{
+              border: '1px solid var(--ui-border)',
+              color: 'var(--ui-text)',
+              background: 'transparent',
+            }}
           >
             Cancel
           </button>

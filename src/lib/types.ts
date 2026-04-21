@@ -64,5 +64,7 @@ export const SOUND_GROUP_ORDER = [
   'Fire',
   'Birds',
   'Wildlife',
+  'Bells',
+  'Noise',
   'Other',
 ];

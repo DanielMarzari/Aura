@@ -5,6 +5,41 @@
   --color-foreground: #f5f5f5;
 }
 
+/* ---- Theme variables ---- */
+:root, :root[data-theme="dusk"] {
+  --ui-overlay: rgba(0, 0, 0, 0.8);
+  --ui-overlay-strong: rgba(0, 0, 0, 0.88);
+  --ui-panel: rgba(255, 255, 255, 0.05);
+  --ui-panel-hover: rgba(255, 255, 255, 0.1);
+  --ui-panel-strong: rgba(0, 0, 0, 0.45);
+  --ui-border: rgba(255, 255, 255, 0.1);
+  --ui-border-hover: rgba(255, 255, 255, 0.4);
+  --ui-text: rgba(255, 255, 255, 0.95);
+  --ui-text-muted: rgba(255, 255, 255, 0.55);
+  --ui-text-dim: rgba(255, 255, 255, 0.35);
+  --ui-accent: #ffffff;
+  --ui-accent-fg: #000000;
+  --ui-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root[data-theme="dawn"] {
+  --ui-overlay: rgba(248, 242, 232, 0.85);
+  --ui-overlay-strong: rgba(248, 242, 232, 0.93);
+  --ui-panel: rgba(0, 0, 0, 0.04);
+  --ui-panel-hover: rgba(0, 0, 0, 0.08);
+  --ui-panel-strong: rgba(255, 255, 255, 0.5);
+  --ui-border: rgba(40, 30, 20, 0.1);
+  --ui-border-hover: rgba(40, 30, 20, 0.4);
+  --ui-text: rgba(30, 25, 20, 0.95);
+  --ui-text-muted: rgba(60, 50, 40, 0.6);
+  --ui-text-dim: rgba(80, 70, 60, 0.4);
+  --ui-accent: rgba(30, 25, 20, 0.92);
+  --ui-accent-fg: rgba(248, 242, 232, 1);
+  --ui-shadow: 0 20px 60px rgba(60, 40, 20, 0.2);
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -34,20 +69,20 @@ body {
   appearance: none;
   width: 4px;
   height: 96px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ui-border);
   border-radius: 9999px;
   outline: none;
   cursor: pointer;
   transition: background 0.2s;
 }
 .aura-slider:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--ui-border-hover);
 }
 .aura-slider-emphasis {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--ui-border-hover);
 }
 .aura-slider-emphasis:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--ui-text-muted);
 }
 
 .aura-slider::-webkit-slider-thumb {
@@ -55,7 +90,7 @@ body {
   appearance: none;
   width: 14px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--ui-accent);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -64,12 +99,11 @@ body {
 }
 .aura-slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  background: #fff;
 }
 .aura-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--ui-accent);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -82,7 +116,7 @@ body {
   appearance: none;
   width: 100%;
   height: 3px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--ui-border);
   border-radius: 9999px;
   outline: none;
   cursor: pointer;
@@ -92,7 +126,7 @@ body {
   appearance: none;
   width: 12px;
   height: 12px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--ui-accent);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -101,7 +135,7 @@ body {
 .aura-slider-horizontal::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--ui-accent);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -128,21 +162,21 @@ html, body {
 
 .field-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-border);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13px;
-  color: #fff;
+  color: var(--ui-text);
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .field-input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--ui-text-dim);
 }
 .field-input:focus {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--ui-border-hover);
+  background: var(--ui-panel-hover);
 }
 
 /* thin horizontal scrollbar for rows */
