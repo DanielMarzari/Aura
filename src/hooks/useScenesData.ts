@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import type { Scene, SceneDraft, Sound, Video } from '@/lib/types';
+import type { Scene, SceneDraft, Sound, SoundUpdate, Video, VideoUpdate } from '@/lib/types';
 
 export function useScenesData() {
   const [scenes, setScenes] = useState<Scene[] | null>(null);
@@ -83,5 +83,68 @@ export function useScenesData() {
     return true;
   }, []);
 
-  return { scenes, videos, sounds, error, reload, createScene, updateScene, deleteScene, toggleFavorite };
+  // ─── Sound CRUD ────────────────────────────────────────────────────────
+  const updateSound = useCallback(async (id: string, patch: SoundUpdate): Promise<Sound | null> => {
+    const prevSounds = sounds;
+    setSounds(prev => prev?.map(s => s.id === id ? { ...s, ...patch } as Sound : s) ?? prev);
+    const res = await fetch(`/api/sounds/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) {
+      setSounds(prevSounds);
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return null;
+    }
+    const { sound } = await res.json();
+    setSounds(prev => prev?.map(s => s.id === id ? sound : s) ?? prev);
+    return sound as Sound;
+  }, [sounds]);
+
+  const deleteSound = useCallback(async (id: string): Promise<boolean> => {
+    const res = await fetch(`/api/sounds/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return false;
+    }
+    setSounds(prev => prev?.filter(s => s.id !== id) ?? prev);
+    return true;
+  }, []);
+
+  // ─── Video CRUD ────────────────────────────────────────────────────────
+  const updateVideo = useCallback(async (id: string, patch: VideoUpdate): Promise<Video | null> => {
+    const prevVideos = videos;
+    setVideos(prev => prev?.map(v => v.id === id ? { ...v, ...patch } as Video : v) ?? prev);
+    const res = await fetch(`/api/videos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) {
+      setVideos(prevVideos);
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return null;
+    }
+    const { video } = await res.json();
+    setVideos(prev => prev?.map(v => v.id === id ? video : v) ?? prev);
+    return video as Video;
+  }, [videos]);
+
+  const deleteVideo = useCallback(async (id: string): Promise<boolean> => {
+    const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      setError((await res.json().catch(() => ({})))?.error ?? `HTTP ${res.status}`);
+      return false;
+    }
+    setVideos(prev => prev?.filter(v => v.id !== id) ?? prev);
+    return true;
+  }, []);
+
+  return {
+    scenes, videos, sounds, error, reload,
+    createScene, updateScene, deleteScene, toggleFavorite,
+    updateSound, deleteSound,
+    updateVideo, deleteVideo,
+  };
 }

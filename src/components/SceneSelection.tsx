@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Bookmark, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { Bookmark, Library, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import type { Scene } from '@/lib/types';
 import { SUBTITLE } from '@/lib/types';
 import { ThemeToggle } from './ThemeToggle';
@@ -13,11 +13,12 @@ type Props = {
   onDeleteScene: (id: string) => void;
   onToggleFavorite: (id: string, next: boolean) => void;
   onHoverScene: (scene: Scene | null) => void;
+  onOpenLibrary: () => void;
   loading?: boolean;
 };
 
 export function SceneSelection({
-  scenes, onPlayScene, onCreateScene, onEditScene, onDeleteScene, onToggleFavorite, onHoverScene, loading,
+  scenes, onPlayScene, onCreateScene, onEditScene, onDeleteScene, onToggleFavorite, onHoverScene, onOpenLibrary, loading,
 }: Props) {
   const [query, setQuery] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -44,6 +45,19 @@ export function SceneSelection({
         <div className="flex items-center gap-3">
           <div className="text-[10px] tracking-[0.6em] uppercase text-[var(--ui-text-muted)]">Aura</div>
           <ThemeToggle />
+          <button
+            onClick={onOpenLibrary}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+            style={{
+              border: '1px solid var(--ui-border)',
+              color: 'var(--ui-text-muted)',
+              background: 'transparent',
+            }}
+            title="Library manager"
+            aria-label="Open library manager"
+          >
+            <Library size={14} strokeWidth={1.6} />
+          </button>
         </div>
         <div className="text-center">
           <div className="text-2xl md:text-3xl font-extralight tracking-[0.3em] text-[var(--ui-text)]">LIBRARY</div>

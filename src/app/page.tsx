@@ -5,11 +5,12 @@ import { SceneBackground } from '@/components/SceneBackground';
 import { Mixer } from '@/components/Mixer';
 import { SceneSelection } from '@/components/SceneSelection';
 import { SceneEditor } from '@/components/SceneEditor';
+import { LibraryManager } from '@/components/LibraryManager';
 import { useScenesData } from '@/hooks/useScenesData';
 import { useSoundscape } from '@/hooks/useSoundscape';
 import type { Scene, SceneDraft } from '@/lib/types';
 
-type View = 'selection' | 'editor' | 'playing';
+type View = 'selection' | 'editor' | 'library' | 'playing';
 
 export default function HomePage() {
   const data = useScenesData();
@@ -89,6 +90,19 @@ export default function HomePage() {
           onDeleteScene={data.deleteScene}
           onToggleFavorite={data.toggleFavorite}
           onHoverScene={setHoveredScene}
+          onOpenLibrary={() => setView('library')}
+        />
+      )}
+
+      {view === 'library' && data.sounds && data.videos && (
+        <LibraryManager
+          sounds={data.sounds}
+          videos={data.videos}
+          onClose={() => setView('selection')}
+          onUpdateSound={data.updateSound}
+          onDeleteSound={data.deleteSound}
+          onUpdateVideo={data.updateVideo}
+          onDeleteVideo={data.deleteVideo}
         />
       )}
 
